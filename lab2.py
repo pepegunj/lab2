@@ -17,16 +17,28 @@ def download_images(query, class_name, num_images):
     # Ссылка на страницу с результатами поиска
     search_url = f'https://yandex.ru/images/search?text={query}'
     
-    # Отправляем запрос на страницу поиска
-    response = requests.get(search_url)
+    # Проверка доступности Yandex Images
+    try:    
+        response = requests.get(search_url)
+
+        response.raise_for_status()  # Проверяем наличие ошибок в ответе
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return
+    
+    # Проверка на блокировку запросов
+    if "captcha" in response.url:
+        print("Requests are blocked. Solve the CAPTCHA manually.")
+        return
+    
     soup = BeautifulSoup(response.text, 'html.parser')
     
     # Счетчик загруженных изображений
     downloaded_images = 0
     
-    # Парсим миниатюры изображений
-    for thumbnail in soup.find_all('img', class_='serp-item__thumb'):
-        img_url = thumbnail.get('src')
+    # Парсим ссылки на полноразмерные изображения
+    for link in soup.find_all('a', class_='serp-item__link'):
+        img_url = link.get('href')
         
         # Собираем абсолютную ссылку
         img_url = urljoin(search_url, img_url)
@@ -52,7 +64,7 @@ def download_images(query, class_name, num_images):
     print(f'Downloaded {downloaded_images} images for class {class_name}')
 
 # Загрузка изображений для класса "rose"
-download_images('rose', 'rose', 1000)
+download_images('rose', 'rose', 10)
 
 # Загрузка изображений для класса "tulip"
-download_images('tulip', 'tulip', 1000)
+download_images('tulip', 'tulip', 10)
