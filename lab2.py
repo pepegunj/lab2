@@ -1,70 +1,41 @@
 import os
+
 import requests
-from bs4 import BeautifulSoup
-from urllib.parse import urlparse, urljoin
+from imageparser import YandexImage
 
-# Функция для создания папок и загрузки изображений
-def download_images(query, class_name, num_images):
-    # Создаем папку dataset, если она не существует
+def parseImages(query):
+    parser = YandexImage()
     if not os.path.exists('dataset'):
-        os.mkdir('dataset')
-    
-    # Создаем папку для класса, если она не существует
-    class_folder = os.path.join('dataset', class_name)
-    if not os.path.exists(class_folder):
-        os.mkdir(class_folder)
-    
-    # Ссылка на страницу с результатами поиска
-    search_url = f'https://yandex.ru/images/search?text={query}'
-    
-    # Проверка доступности Yandex Images
-    try:    
-        response = requests.get(search_url)
+        os.makedirs('dataset')
 
-        response.raise_for_status()  # Проверяем наличие ошибок в ответе
-    except requests.exceptions.RequestException as e:
-        print(f"Error: {e}")
-        return
-    
-    # Проверка на блокировку запросов
-    if "captcha" in response.url:
-        print("Requests are blocked. Solve the CAPTCHA manually.")
-        return
-    
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Счетчик загруженных изображений
-    downloaded_images = 0
-    
-    # Парсим ссылки на полноразмерные изображения
-    for link in soup.find_all('a', class_='serp-item__link'):
-        img_url = link.get('href')
+    dir_path = os.path.join('dataset', query)
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
         
-        # Собираем абсолютную ссылку
-        img_url = urljoin(search_url, img_url)
-        
-        # Определяем расширение файла
-        img_ext = '.jpg'  # Устанавливаем расширение .jpg
-        
-        # Сохраняем изображение
-        img_filename = f'{downloaded_images:04d}{img_ext}'
-        img_path = os.path.join(class_folder, img_filename)
-        
-        # Загружаем изображение
-        img_data = requests.get(img_url).content
-        with open(img_path, 'wb') as img_file:
-            img_file.write(img_data)
-        
-        downloaded_images += 1
-        
-        # Если достигнуто заданное количество изображений, выходим из цикла
-        if downloaded_images >= num_images:
-            break
-    
-    print(f'Downloaded {downloaded_images} images for class {class_name}')
+    image_counter = 0
 
-# Загрузка изображений для класса "rose"
-download_images('rose', 'rose', 10)
+    for item in parser.search(query, parser.size.large):
+        print(item.title)
+        print(item.url)
+        print(item.preview.url)
+        print("(", item.size, ")", sep='')
+        filename = os.path.join(dir_path, f"{image_counter:04}.jpg")
+        try:
+            response = requests.get(item.url, stream=True)
+            response.raise_for_status()
+            
+            # Запись изображения в файл
+            with open(filename, 'wb') as file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    file.write(chunk)
+            
+            image_counter += 1
+            if image_counter > 15:
+                print("Reached the maximum image limit (15). Stopping the function.")
+                break
+        except requests.RequestException as e:
+            print(f"Error downloading image from URL {item.url}. Error: {e}")
 
-# Загрузка изображений для класса "tulip"
-download_images('tulip', 'tulip', 10)
+
+parseImages("rose")
+parseImages("tulip")
