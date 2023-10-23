@@ -1,7 +1,8 @@
 import os
-
 import requests
 from imageparser import YandexImage
+import csv
+import shutil
 
 def parseImages(query):
     parser = YandexImage()
@@ -30,11 +31,27 @@ def parseImages(query):
                     file.write(chunk)
             
             image_counter += 1
-            if image_counter > 15:
-                print("Reached the maximum image limit (15). Stopping the function.")
+            if image_counter > 10:
+                print("Reached the maximum image limit (10). Stopping the function.")
                 break
         except requests.RequestException as e:
             print(f"Error downloading image from URL {item.url}. Error: {e}")
+
+def create_annotation_file(class_folder, output_file):
+    dataset_folder = 'dataset'  # Путь к исходному датасету
+    with open(output_file, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Absolute Path', 'Relative Path', 'Class Label'])
+        class_path = os.path.join(dataset_folder, class_folder)
+        for root, dirs, files in os.walk(class_path):
+            for file in files:
+                if file.endswith('.jpg'):
+                    abs_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(abs_path, dataset_folder)
+                    label = class_folder
+                    writer.writerow([abs_path, rel_path, label])
+
+
 
 
 parseImages("rose")
