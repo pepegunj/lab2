@@ -1,5 +1,3 @@
-# image_utils.py
-
 from PIL import Image
 
 def resize_image(input_image_path, output_image_path, size):
