@@ -1,3 +1,4 @@
+import datetime
 import os
 import random
 import requests
@@ -38,23 +39,30 @@ def parseImages(query):
         except requests.RequestException as e:
             print(f"Error downloading image from URL {item.url}. Error: {e}")
 
-def create_annotation_file(class_folder, output_file):
-    dataset_folder = 'dataset' 
+def create_annotation_file(dataset_folder='dataset', output_folder='output_folder'):
+    # Генерируем имя файла аннотации с текущим временем в миллисекундах
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S%f")
+    output_file = os.path.join(output_folder, f'annotation_{timestamp}.csv')
+
     with open(output_file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['Absolute Path', 'Relative Path', 'Class Label'])
-        class_path = os.path.join(dataset_folder, class_folder)
-        for root, dirs, files in os.walk(class_path):
-            for file in files:
-                if file.endswith('.jpg'):
-                    abs_path = os.path.abspath(os.path.join(root, file))
-                    rel_path = os.path.relpath(abs_path, dataset_folder)
-                    label = class_folder
-                    writer.writerow([abs_path, rel_path, label])
+
+        for class_folder in os.listdir(dataset_folder):
+            class_path = os.path.join(dataset_folder, class_folder)
+            if os.path.isdir(class_path):
+                for root, dirs, files in os.walk(class_path):
+                    for file in files:
+                        if file.endswith('.jpg'):
+                            abs_path = os.path.abspath(os.path.join(root, file))
+                            rel_path = os.path.relpath(abs_path, dataset_folder)
+                            label = class_folder
+                            writer.writerow([abs_path, rel_path, label])
+
 
 
 def copy_dataset_with_rename(output_folder):
-    input_folder = 'dataset'  # Путь к исходному датасету
+    input_folder = 'dataset'
 
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -90,17 +98,16 @@ def create_copy_with_unique_random_names(output_folder):
                 shutil.copy(old_path, new_path)
 
 
-used_instances = set()
-instances_by_class = {}
+#used_instances = set()
+#instances_by_class = {}
 
-def collect_instances_by_class(dataset_folder='dataset'):
+def collect_instances_by_class(instances_by_class:dict,dataset_folder='dataset'):
     for class_folder in os.listdir(dataset_folder):
         if os.path.isdir(os.path.join(dataset_folder, class_folder)):
             instances = [f for f in os.listdir(os.path.join(dataset_folder, class_folder)) if f.endswith('.jpg')]
             if instances:
                 instances_by_class[class_folder] = instances
-collect_instances_by_class()
-def get_next_instance(class_folder, dataset_folder='dataset'):
+def get_next_instance(used_instances:set , instances_by_class:dict, class_folder, dataset_folder='dataset'):
     if class_folder not in instances_by_class:
         print('None')
         return None
@@ -122,7 +129,7 @@ def get_next_instance(class_folder, dataset_folder='dataset'):
     return instance_path
 
 
-# parseImages("rose")
+# parseImages("hui")
 # parseImages("tulip")
 # create_annotation_file('rose','annotation.csv')
 # copy_dataset_with_rename('newset1')
