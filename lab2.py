@@ -5,6 +5,7 @@ import requests
 from imageparser import YandexImage
 import csv
 import shutil
+import image_utils as img_utils
 
 def parseImages(query):
     parser = YandexImage()
@@ -135,5 +136,7 @@ def get_next_instance(used_instances:set , instances_by_class:dict, class_folder
 # copy_dataset_with_rename('newset1')
 # create_copy_with_unique_random_names('newset2')
 # get_next_instance('tulip')
+# img_utils.convert_to_grayscale("C:\\programming\\curs3\\Pd\\lab2\\lab2\\dataset\\rose\\0000.jpg","C:\\programming\\curs3\\Pd\\lab2\\lab2\\testfolder\\0000.jpg")
+# img_utils.resize_image("C:\\programming\\curs3\\Pd\\lab2\\lab2\\dataset\\rose\\0000.jpg","C:\\programming\\curs3\\Pd\\lab2\\lab2\\testfolder\\0001.jpg", (100,100))
 
 
