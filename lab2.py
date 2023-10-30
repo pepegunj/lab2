@@ -129,7 +129,7 @@ def get_next_instance(used_instances:set , instances_by_class:dict, class_folder
     return instance_path
 
 
-# parseImages("hui")
+# parseImages("rose")
 # parseImages("tulip")
 # create_annotation_file('rose','annotation.csv')
 # copy_dataset_with_rename('newset1')
